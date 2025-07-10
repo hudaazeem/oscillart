@@ -10,16 +10,25 @@ const oscillator = audioCtx.createOscillator();
 oscillator.connect(gainNode);
 gainNode.connect(audioCtx.destination);
 oscillator.type = "sine";
-
+const color_picker = document.getElementById("color");
+const vol_slider= document.getElementById('vol-slider');
 //define canvas variables
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d"); //basically the screen
+
+var width = ctx.canvas.width;
+var height = ctx.canvas.height;
 
 var amplitude = 40;
 
 var counter = 0;
 
 var interval = null;
+
+var reset= false;
+
+var timepernote = 0;
+var length = 0;
 
 //mapping notes to frequency
 notenames = new Map();
@@ -43,42 +52,63 @@ function frequency(pitch){
 
     gainNode.gain.setValueAtTime(100, audioCtx.currentTime);
     oscillator.frequency.setValueAtTime(pitch, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime+1);
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime+(timepernote/1000)-0.1);
 
 }
 
 
 
 function handle(){
-    
-    var usernotes= String(input.value);
-    frequency(notenames.get(usernotes));
-
+    reset = true;
     audioCtx.resume();
+    var usernotes= String(input.value);
+    var noteslist = [];
+    length = usernotes.length;
+    timepernote = (6000/length);
+    for (i = 0; i < usernotes.length; i++) {
+        noteslist.push(notenames.get(usernotes.charAt(i)))
+    }
+    let j = 0;
+    repeat = setInterval(() => {
+        if(j<noteslist.length){
+            frequency(parseInt(noteslist[j]));
+            drawWave();
+            j++
+        }else{
+            clearInterval(repeat)
+        }
+    }, timepernote)
+
     gainNode.gain.value=0;
-    frequency(input.value);
     drawWave();
    
 }
 
 function drawWave(){
-    ctx.clearRect(0, 0, width, height);  //clears everything inside the canvas, to get rid of any past sine waves
-    x = 0;
-    y = height/2;
-    ctx.moveTo(x, y);  //moves pointer to the left-most middle of the canvas, to draw a new wave from here
-    ctx.beginPath(); //this method tells the computer that we’re ready to start painting
+    clearInterval(interval);
+    if(reset){
+        ctx.clearRect(0, 0, width, height);  //clears everything inside the canvas, to get rid of any past sine waves
+        x = 0;
+        y = height/2;
+        ctx.moveTo(x, y);  //moves pointer to the left-most middle of the canvas, to draw a new wave from here
+        ctx.beginPath(); //this method tells the computer that we’re ready to start painting
+    }
     counter=0;
     interval = setInterval(line, 20);
-    if(counter>50){
-        clearInterval(interval);
-    }
+    reset=false;
+    
 }
 
 function line(){
-    y = height/2 + (amplitude*Math.sin(x*2*Math.PI*freq));
+    y = height/2 + (amplitude*Math.sin(x*2*Math.PI*freq*0.5*length));
     ctx.lineTo(x, y);
     ctx.stroke();
     x=x+1;
-
+     ctx.strokeStyle = color_picker.value;
+    
     counter++;
+    if(counter>50){
+        clearInterval(interval);
+    }
+    ctx.stroke();
 }
