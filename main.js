@@ -16,6 +16,9 @@ gainNode.connect(audioCtx.destination);
 oscillator.type = "sine";
 const color_picker = document.getElementById("color");
 const vol_slider= document.getElementById('vol-slider');
+
+const waveformSelect = document.getElementById("waveform");
+
 //define canvas variables
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d"); //basically the screen
@@ -52,6 +55,7 @@ gainNode.gain.value=0;
 function frequency(pitch){
     
     freq = pitch / 10000;
+    oscillator.type = waveformSelect.value;
     gainNode.gain.setValueAtTime(vol_slider.value/100, audioCtx.currentTime);
     let localSetting= setInterval(() => {
         gainNode.gain.value = vol_slider.value/100;
