@@ -19,6 +19,8 @@ const vol_slider= document.getElementById('vol-slider');
 
 const waveformSelect = document.getElementById("waveform");
 
+const recording_toggle = document.getElementById('record');
+
 //define canvas variables
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d"); //basically the screen
@@ -35,6 +37,9 @@ var reset= false;
 
 var timepernote = 0;
 var length = 0;
+
+var blob, recorder = null;
+var chunks = [];
 
 ctx.lineWidth = 2.5;
 ctx.lineJoin = 'round';
@@ -152,9 +157,7 @@ function scheduleNote(pitch, startTime) {
     oscillator.frequency.setValueAtTime(pitch, startTime);
 
     const gain = vol_slider.value / 100;
-    const attack = 0.01; 
     const release = 0.01;
-    const noteDuration = timepernote/1000;
 
     const stopTime = startTime + (timepernote - 10) / 1000;
 
@@ -167,4 +170,46 @@ function scheduleNote(pitch, startTime) {
     gainNode.gain.linearRampToValueAtTime(0, stopTime);
 
     console.log(`Scheduled ${pitch}Hz at ${startTime.toFixed(3)}s`);
+}
+
+function startRecording(){
+    const canvasStream = canvas.captureStream(20);
+    const audioDestination = audioCtx.createMediaStreamDestination();
+    const combinedStream = new MediaStream();
+    canvasStream.getVideoTracks().forEach(track =>
+    combinedStream.addTrack(track));
+    audioDestination.stream.getAudioTracks().forEach(track => combinedStream.addTrack(track));
+    gainNode.connect(audioDestination);
+    recorder = new MediaRecorder(combinedStream, {
+        mimeType: 'video/webm'});
+    recorder.ondataavailable = e => {
+    if (e.data.size > 0) {
+        chunks.push(e.data);
+    }
+    };
+
+
+    recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'recording.webm';
+        a.click();
+        URL.revokeObjectURL(url);
+
+    };
+    recorder.start();
+}
+
+var is_recording = false;
+function toggle(){
+    is_recording = !is_recording
+    if(is_recording){
+        recording_toggle.innerHTML = "Stop Recording";
+        startRecording();
+    } else {
+        recording_toggle.innerHTML = "Start Recording";
+        recorder.stop();
+    }
 }
