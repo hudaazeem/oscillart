@@ -1,3 +1,7 @@
+let setting = null;
+
+let freq = 0;
+
 const input = document.getElementById('input');
 
 // create web audio api elements
@@ -47,12 +51,17 @@ gainNode.gain.value=0;
 
 function frequency(pitch){
     
-    freq=pitch/10000;
-
-    gainNode.gain.setValueAtTime(100, audioCtx.currentTime);
-    setting= setInterval(() => {gainNode.gain.value = vol_slider.value}, 1);
+    freq = pitch / 10000;
+    gainNode.gain.setValueAtTime(vol_slider.value/100, audioCtx.currentTime);
+    let localSetting= setInterval(() => {
+        gainNode.gain.value = vol_slider.value/100;
+    }, 1);
     oscillator.frequency.setValueAtTime(pitch, audioCtx.currentTime);
-    setTimeout(() => {clearInterval(setting); gainNode.gain.value=0;}, ((timepernote/1000)-0.1))
+    setTimeout(() => {
+        clearInterval(localSetting);
+        gainNode.gain.value = 0;
+        console.log("Ending note now");
+    }, ((timepernote)-10));
 }
 
 
@@ -80,7 +89,10 @@ function handle(){
 
     gainNode.gain.value=0;
     drawWave();
-   
+    //setTimeout(() => {
+       
+    //    gainNode.gain.value=0;
+    //}, timepernote*noteslist.length);
 }
 
 function drawWave(){
@@ -99,6 +111,7 @@ function drawWave(){
 }
 
 function line(){
+    if(!freq) return;
     y = height/2 + ((vol_slider.value/100)*40*Math.sin(x*2*Math.PI*freq*0.5*length));
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -106,7 +119,7 @@ function line(){
      ctx.strokeStyle = color_picker.value;
     
     counter++;
-    if(counter>50){
+    if(counter>(timepernote/20)){
         clearInterval(interval);
     }
     ctx.stroke();
