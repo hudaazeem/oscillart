@@ -36,6 +36,10 @@ var reset= false;
 var timepernote = 0;
 var length = 0;
 
+ctx.lineWidth = 2.5;
+ctx.lineJoin = 'round';
+ctx.lineCap = 'round';
+
 //mapping notes to frequency
 notenames = new Map();
 notenames.set("C", 261.6);
@@ -52,57 +56,62 @@ oscillator.start();
 gainNode.gain.value=0;
 
 
-function frequency(pitch){
-    
+function frequency(pitch) {
     freq = pitch / 10000;
     oscillator.type = waveformSelect.value;
-    gainNode.gain.setValueAtTime(vol_slider.value/100, audioCtx.currentTime);
-    let localSetting= setInterval(() => {
-        gainNode.gain.value = vol_slider.value/100;
-    }, 1);
     oscillator.frequency.setValueAtTime(pitch, audioCtx.currentTime);
-    setTimeout(() => {
-        clearInterval(localSetting);
-        gainNode.gain.value = 0;
-        console.log("Ending note now");
-    }, ((timepernote)-10));
+
+    const gain = vol_slider.value / 100;
+    const startTime = audioCtx.currentTime;
+    const stopTime = startTime + (timepernote - 10) / 1000; // convert ms to sec
+
+    // Use linear ramp to avoid clicks
+    gainNode.gain.setValueAtTime(0, startTime);
+    gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.01);
+    gainNode.gain.linearRampToValueAtTime(0, stopTime);
+
+    console.log("Note from", startTime.toFixed(3), "to", stopTime.toFixed(3));
 }
 
 
 
-function handle(){
+
+function handle() {
     reset = true;
     audioCtx.resume();
-    var usernotes= String(input.value);
-    var noteslist = [];
-    length = usernotes.length;
-    timepernote = (6000/length);
-    for (i = 0; i < usernotes.length; i++) {
-        noteslist.push(notenames.get(usernotes.charAt(i)))
-    }
-    let j = 0;
-    repeat = setInterval(() => {
-        if(j<noteslist.length){
-            frequency(parseInt(noteslist[j]));
-            drawWave();
-            j++
-        }else{
-            clearInterval(repeat)
-        }
-    }, timepernote)
 
-    gainNode.gain.value=0;
+    const usernotes = String(input.value);
+    const noteslist = [];
+    length = usernotes.length;
+    timepernote = 6000 / length;
+
+    for (let i = 0; i < length; i++) {
+        noteslist.push(notenames.get(usernotes.charAt(i)));
+    }
+
+    const now = audioCtx.currentTime;
+    let totalDelay = 0;
+
+    noteslist.forEach((pitch, index) => {
+        const noteStart = now + totalDelay / 1000; // convert ms to seconds
+        setTimeout(() => {
+            freq=pitch/10000;
+            scheduleNote(pitch, audioCtx.currentTime);
+            drawWave()
+        }, totalDelay);
+        totalDelay += timepernote;
+    });
+
+    gainNode.gain.value = 0;
     drawWave();
-    //setTimeout(() => {
-       
-    //    gainNode.gain.value=0;
-    //}, timepernote*noteslist.length);
 }
+
 
 function drawWave(){
     clearInterval(interval);
     if(reset){
         ctx.clearRect(0, 0, width, height);  //clears everything inside the canvas, to get rid of any past sine waves
+        
         x = 0;
         y = height/2;
         ctx.moveTo(x, y);  //moves pointer to the left-most middle of the canvas, to draw a new wave from here
@@ -115,6 +124,13 @@ function drawWave(){
 }
 
 function line(){
+    const waveColor = color_picker.value;
+    ctx.strokeStyle = waveColor;
+    ctx.shadowBlur=20;
+    ctx.shadowColor=waveColor;
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.moveTo(x,y);
     if(!freq) return;
     y = height/2 + ((vol_slider.value/100)*40*Math.sin(x*2*Math.PI*freq*0.5*length));
     ctx.lineTo(x, y);
@@ -125,6 +141,30 @@ function line(){
     counter++;
     if(counter>(timepernote/20)){
         clearInterval(interval);
+        ctx.shadowBlur=0;
     }
     ctx.stroke();
+}
+
+function scheduleNote(pitch, startTime) {
+    freq = pitch / 10000;
+    oscillator.type = waveformSelect.value;
+    oscillator.frequency.setValueAtTime(pitch, startTime);
+
+    const gain = vol_slider.value / 100;
+    const attack = 0.01; 
+    const release = 0.01;
+    const noteDuration = timepernote/1000;
+
+    const stopTime = startTime + (timepernote - 10) / 1000;
+
+    gainNode.gain.cancelScheduledValues(startTime);
+
+
+    gainNode.gain.setValueAtTime(0, startTime);
+    gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.01);
+    gainNode.gain.setValueAtTime(gain, stopTime - release);
+    gainNode.gain.linearRampToValueAtTime(0, stopTime);
+
+    console.log(`Scheduled ${pitch}Hz at ${startTime.toFixed(3)}s`);
 }
