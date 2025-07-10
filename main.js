@@ -19,7 +19,6 @@ var ctx = canvas.getContext("2d"); //basically the screen
 var width = ctx.canvas.width;
 var height = ctx.canvas.height;
 
-var amplitude = 40;
 
 var counter = 0;
 
@@ -51,9 +50,9 @@ function frequency(pitch){
     freq=pitch/10000;
 
     gainNode.gain.setValueAtTime(100, audioCtx.currentTime);
+    setting= setInterval(() => {gainNode.gain.value = vol_slider.value}, 1);
     oscillator.frequency.setValueAtTime(pitch, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime+(timepernote/1000)-0.1);
-
+    setTimeout(() => {clearInterval(setting); gainNode.gain.value=0;}, ((timepernote/1000)-0.1))
 }
 
 
@@ -100,7 +99,7 @@ function drawWave(){
 }
 
 function line(){
-    y = height/2 + (amplitude*Math.sin(x*2*Math.PI*freq*0.5*length));
+    y = height/2 + ((vol_slider.value/100)*40*Math.sin(x*2*Math.PI*freq*0.5*length));
     ctx.lineTo(x, y);
     ctx.stroke();
     x=x+1;
