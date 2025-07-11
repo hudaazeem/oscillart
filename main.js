@@ -3,27 +3,23 @@ let setting = null;
 let freq = 0;
 
 const input = document.getElementById('input');
-
-// create web audio api elements
-const audioCtx = new AudioContext(); //on or off
-const gainNode = audioCtx.createGain(); //volume
+const audioCtx = new AudioContext(); 
+const gainNode = audioCtx.createGain(); 
 
 
-// create Oscillator node
 const oscillator = audioCtx.createOscillator();
 oscillator.connect(gainNode);
 gainNode.connect(audioCtx.destination);
 oscillator.type = "sine";
-const color_picker = document.getElementById("color");
-const vol_slider= document.getElementById('vol-slider');
+const colorPicker = document.getElementById("color");
+const volSlider= document.getElementById('vol-slider');
 
 const waveformSelect = document.getElementById("waveform");
 
-const recording_toggle = document.getElementById('record');
+const recordingToggle = document.getElementById('record');
 
-//define canvas variables
 var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d"); //basically the screen
+var ctx = canvas.getContext("2d"); 
 
 var width = ctx.canvas.width;
 var height = ctx.canvas.height;
@@ -35,7 +31,7 @@ var interval = null;
 
 var reset= false;
 
-var timepernote = 0;
+var timePerNote = 0;
 var length = 0;
 
 var blob, recorder = null;
@@ -45,7 +41,6 @@ ctx.lineWidth = 2.5;
 ctx.lineJoin = 'round';
 ctx.lineCap = 'round';
 
-//mapping notes to frequency
 notenames = new Map();
 notenames.set("C", 261.6);
 notenames.set("D", 293.7);
@@ -56,7 +51,6 @@ notenames.set("A", 440);
 notenames.set("B", 493.9);
 
 
-//Silencing volume at the beginning
 oscillator.start();
 gainNode.gain.value=0;
 
@@ -66,11 +60,10 @@ function frequency(pitch) {
     oscillator.type = waveformSelect.value;
     oscillator.frequency.setValueAtTime(pitch, audioCtx.currentTime);
 
-    const gain = vol_slider.value / 100;
+    const gain = volSlider.value / 100;
     const startTime = audioCtx.currentTime;
-    const stopTime = startTime + (timepernote - 10) / 1000; // convert ms to sec
+    const stopTime = startTime + (timePerNote- 10) / 1000; // convert ms to sec
 
-    // Use linear ramp to avoid clicks
     gainNode.gain.setValueAtTime(0, startTime);
     gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.01);
     gainNode.gain.linearRampToValueAtTime(0, stopTime);
@@ -88,7 +81,7 @@ function handle() {
     const usernotes = String(input.value);
     const noteslist = [];
     length = usernotes.length;
-    timepernote = 6000 / length;
+    timePerNote = 6000 / length;
 
     for (let i = 0; i < length; i++) {
         noteslist.push(notenames.get(usernotes.charAt(i)));
@@ -98,29 +91,31 @@ function handle() {
     let totalDelay = 0;
 
     noteslist.forEach((pitch, index) => {
-        const noteStart = now + totalDelay / 1000; // convert ms to seconds
+        const noteStart = now + totalDelay / 1000; 
         setTimeout(() => {
             freq=pitch/10000;
             scheduleNote(pitch, audioCtx.currentTime);
             drawWave()
         }, totalDelay);
-        totalDelay += timepernote;
+        totalDelay += timePerNote;
     });
 
     gainNode.gain.value = 0;
     drawWave();
 }
 
+/*
 
+*/
 function drawWave(){
     clearInterval(interval);
     if(reset){
-        ctx.clearRect(0, 0, width, height);  //clears everything inside the canvas, to get rid of any past sine waves
+        ctx.clearRect(0, 0, width, height);  
         
         x = 0;
         y = height/2;
-        ctx.moveTo(x, y);  //moves pointer to the left-most middle of the canvas, to draw a new wave from here
-        ctx.beginPath(); //this method tells the computer that we’re ready to start painting
+        ctx.moveTo(x, y);  
+        ctx.beginPath(); 
     }
     counter=0;
     interval = setInterval(line, 20);
@@ -129,7 +124,7 @@ function drawWave(){
 }
 
 function line(){
-    const waveColor = color_picker.value;
+    const waveColor = colorPicker.value;
     ctx.strokeStyle = waveColor;
     ctx.shadowBlur=20;
     ctx.shadowColor=waveColor;
@@ -137,14 +132,14 @@ function line(){
     ctx.beginPath();
     ctx.moveTo(x,y);
     if(!freq) return;
-    y = height/2 + ((vol_slider.value/100)*40*Math.sin(x*2*Math.PI*freq*0.5*length));
+    y = height/2 + ((volSlider.value/100)*40*Math.sin(x*2*Math.PI*freq*0.5*length));
     ctx.lineTo(x, y);
     ctx.stroke();
     x=x+1;
-     ctx.strokeStyle = color_picker.value;
+     ctx.strokeStyle = colorPicker.value;
     
     counter++;
-    if(counter>(timepernote/20)){
+    if(counter>(timePerNote/20)){
         clearInterval(interval);
         ctx.shadowBlur=0;
     }
@@ -156,10 +151,10 @@ function scheduleNote(pitch, startTime) {
     oscillator.type = waveformSelect.value;
     oscillator.frequency.setValueAtTime(pitch, startTime);
 
-    const gain = vol_slider.value / 100;
+    const gain = volSlider.value / 100;
     const release = 0.01;
 
-    const stopTime = startTime + (timepernote - 10) / 1000;
+    const stopTime = startTime + (timePerNote - 10) / 1000;
 
     gainNode.gain.cancelScheduledValues(startTime);
 
@@ -206,10 +201,10 @@ var is_recording = false;
 function toggle(){
     is_recording = !is_recording
     if(is_recording){
-        recording_toggle.innerHTML = "Stop Recording";
+        recordingToggle.innerHTML = "Stop Recording";
         startRecording();
     } else {
-        recording_toggle.innerHTML = "Start Recording";
+        recordingToggle.innerHTML = "Start Recording";
         recorder.stop();
     }
 }
