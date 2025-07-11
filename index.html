@@ -2,28 +2,47 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>title</title>
+    <title>Sinusoidal Soundscapes</title>
     <link href="style.css" rel="stylesheet"/>
+    <style>
+        body{
+            background-image: url('https://images.freecreatives.com/wp-content/uploads/2016/02/HD-Purple-Background.jpg');
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+    </style>
 </head>
 <body>
     <div id="container">
-        <canvas id="canvas">
-            
-        </canvas>
+        <h1>🎶Sinusoidal Soundscapes🎶</h1>
+        <h4><i>Type in musical notes and adjust the options below to create your own unique visual experience!</i></h4>
+        <canvas id="canvas"></canvas>
+        <div id="notes">
+            <input type="text" id="input">
+            <button id="submit" onclick= "handle()" style="font-size: 16px; font-family: Tahoma;" >Submit!</button>
+        </div>
+        <div id="enter_color">
+            <label style="font-size: 16px; margin-top: 5px;font-family: Tahoma;">Color Picker:</label>
+            <input type="color" id="color" value="#ff0000">
+        </div>
+       
+        <div id="enter_volume">
+            <label style="font-size: 16px; margin-top: 15px;font-family: Tahoma;">Volume:</label>
+            <input type="range" min="1" max="100" value ="100" id="vol-slider">
+        </div>
+        <div id="type_of_wave">
+            <label for="waveform" style="font-size: 16px; margin-top: 5px;font-family: Tahoma;">Waveform:</label>
+            <select id="waveform" style="font-size: 16px;font-family: Tahoma;">
+                <option value="sine" style="font-size: 14px; font-family: Tahoma;">Sine</option>
+                <option value="square" style="font-size: 14px;font-family: Tahoma;">Square</option>
+                <option value="triangle" style="font-size: 14px;font-family: Tahoma;">Triangle</option>
+                <option value="sawtooth" style="font-size: 14px;font-family: Tahoma;">Sawtooth</option>
+            </select>
+        </div>
+        <button id="record" onclick="toggle()" style="font-size: 16px; margin-top:5px; font-family: Tahoma;">Start Recording</button>
     </div>
-    <input type="text" id="input">
-    <button id="submit" onclick= "handle()">Submit me why dontcha</button>
-    <input type="color" id="color" value="#ff0000">
-    <input type="range" min="1" max="100" value ="100" id="vol-slider">
-
-    <label for="waveform">Waveform:</label>
-    <select id="waveform">
-        <option value="sine">Sine</option>
-        <option value="square">Square</option>
-        <option value="triangle">Triangle</option>
-        <option value="sawtooth">Sawtooth</option>
-    </select>
-    <button id="record" onclick="toggle()">Start Recording</button>
+   
     <script src="main.js"></script>
 </body>
 </html>
